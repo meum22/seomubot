@@ -4,10 +4,17 @@ import math
 import numbers
 import re
 from copy import copy
-from openpyxl import load_workbook
-from openpyxl.cell.cell import MergedCell
 from io import BytesIO
 from datetime import datetime
+
+try:
+    from openpyxl import load_workbook
+    from openpyxl.cell.cell import MergedCell
+except Exception:
+    load_workbook = None
+
+    class MergedCell:  # fallback to keep module importable
+        pass
 
 # -------------------------------
 # 기본 설정
@@ -540,6 +547,10 @@ def _excel_value_for_column(col_name, raw, row_name):
 # 양식 적용 (미리보기와 동일한 output_df 사용)
 # -------------------------------
 def apply_template(form_file, output_df, dept_name):
+    if load_workbook is None:
+        raise RuntimeError(
+            "openpyxl가 설치되지 않았습니다. requirements.txt에 openpyxl를 추가 후 재배포해 주세요."
+        )
 
     form_file.seek(0)
     wb = load_workbook(form_file)
@@ -656,8 +667,13 @@ if "output_df" in st.session_state:
     y, m = usage_year_month_from_output(st.session_state.output_df)
     filename = f"{dept_name} {y}.{m:02d}월 업무택시 내역.xlsx"
 
-    st.download_button(
-        "📥 파일 다운로드",
-        data=apply_template(form_file, st.session_state.output_df, dept_name),
-        file_name=filename
-    )
+    try:
+        output_bytes = apply_template(form_file, st.session_state.output_df, dept_name)
+    except RuntimeError as e:
+        st.error(str(e))
+    else:
+        st.download_button(
+            "📥 파일 다운로드",
+            data=output_bytes,
+            file_name=filename
+        )
