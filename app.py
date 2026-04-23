@@ -3,6 +3,7 @@ import pandas as pd
 import math
 import numbers
 import re
+from pathlib import Path
 from copy import copy
 from io import BytesIO
 from datetime import datetime
@@ -50,10 +51,25 @@ if not st.session_state.ack:
 # -------------------------------
 # 제목
 # -------------------------------
+def resolve_logo_path():
+    base = Path(__file__).resolve().parent
+    candidates = [
+        base / "logo.png",
+        base / "5.DatabaseSQL" / "code" / "logo.png",
+        base.parent / "5.DatabaseSQL" / "code" / "logo.png",
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
+
 title_col_logo, title_col_text = st.columns([0.85, 4.15], gap="small")
 with title_col_logo:
     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-    st.image(r"c:\Users\USER\AI-Education\5.DatabaseSQL\code\logo.png", width=180)
+    logo_path = resolve_logo_path()
+    if logo_path is not None:
+        st.image(str(logo_path), width=180)
 with title_col_text:
     st.markdown(
         "<h1 style='margin: 10px 0 0 -18px; padding: 0;'>서무봇(업무택시)</h1>",
