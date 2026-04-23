@@ -257,7 +257,13 @@ def parse_amount_numeric(val):
 # -------------------------------
 def extract_data(file, members):
     file.seek(0)
-    xls = pd.ExcelFile(file)
+    try:
+        xls = pd.ExcelFile(file)
+    except ImportError as e:
+        raise RuntimeError(
+            "엑셀 처리를 위해 `openpyxl` 설치가 필요합니다. "
+            "배포 환경 requirements.txt에 `openpyxl>=3.1.0`을 추가 후 재배포해 주세요."
+        ) from e
     result = pd.DataFrame()
 
     all_names = [
@@ -635,7 +641,11 @@ if st.button("🚀 내역 생성"):
         if not any(normalize_name(n) for p in members for n in members[p]):
             st.warning("인원 입력란에 이름을 한 명 이상 입력해 주세요.")
         else:
-            df = extract_data(total_file, members)
+            try:
+                df = extract_data(total_file, members)
+            except RuntimeError as e:
+                st.error(str(e))
+                st.stop()
 
             if len(df) == 0:
                 st.warning(
